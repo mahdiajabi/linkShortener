@@ -1,20 +1,40 @@
-/.phpunit.cache
+# Laravel
+
+# The .env file holds environment variables and should not be committed.
+.env
+
+# Laravel specific folders that contain compiled files and other dynamic content
+/vendor
 /node_modules
-/public/build
-/public/hot
 /public/storage
 /storage/*.key
-/vendor
-.env
-.env.backup
-.env.production
-.phpactor.json
+/storage/app/public
+/storage/framework/cache/data
+/storage/framework/sessions
+/storage/framework/testing
+/storage/framework/views
+/storage/logs
+
+# Ignoring these Composer generated files
+/composer.lock
+/composer.phar
+
+# Ignoring the compiled class file
 .phpunit.result.cache
-Homestead.json
-Homestead.yaml
-auth.json
-npm-debug.log
-yarn-error.log
-/.fleet
+
+# Various IDE configurations
 /.idea
 /.vscode
+
+# Ignoring log files and databases
+*.log
+*.sql
+*.sqlite
+*.db
+
+# Ignoring OS generated files
+.DS_Store
+Thumbs.db
+
+# Ignoring PHPUnit result cache
+.phpunit.result.cache
