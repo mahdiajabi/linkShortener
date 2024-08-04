@@ -48,13 +48,28 @@ class LinkController extends Controller
         }
 
         $link->increment('click_count');
-        $userId = Auth::id();
+        $userId = Auth::id() ? Auth::id() : null;
         ClickLog::create([
             'code' => $code,
             'user_id' => $userId,
             'clicked_at' => now()
-        ]);        
-        return response()->json(['url' => $link->url]);
-        
+        ]);
+
+        return redirect($link->url);
+    }
+
+    public function getClickCount(Request $request)
+    {
+        $request->validate([
+            'code' => 'required|string'
+        ]);
+
+        $link = Link::where('code', $request->code)->first();
+
+        if (!$link) {
+            return response()->json(['message' => 'Link not found'], 404);
+        }
+
+        return response()->json(['click_count' => $link->click_count]);
     }
 }
