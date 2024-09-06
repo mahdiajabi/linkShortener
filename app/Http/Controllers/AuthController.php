@@ -12,19 +12,16 @@ class AuthController extends Controller
     public function signup(Request $request)
     {
         try {
-            // ولیدیت ورودی‌ها
             $request->validate([
                 'email' => 'required|email|unique:users',
                 'password' => 'required|min:6',
             ]);
 
-            // ایجاد کاربر 
             $user = User::create([
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
             ]);
 
-            // ایجاد توکن 
             $token = $user->createToken('Personal Access Token')->plainTextToken;
 
             return response()->json([

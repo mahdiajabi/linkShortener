@@ -13,7 +13,10 @@ return Application::configure(basePath: dirname(__DIR__))
         apiPrefix: 'api', 
     )
     ->withMiddleware(function (Middleware $middleware) {
-        //
+        $middleware->web(append: [
+            \App\Http\Middleware\EnsureTokenIsValid::class,
+            \App\Http\Middleware\RedirectIfAuthenticated::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
