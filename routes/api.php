@@ -14,3 +14,8 @@ use App\Http\Controllers\AuthController;
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/signup', [AuthController::class, 'signup']);
+
+use App\Http\Controllers\OtpController;
+
+Route::post('/otp/send', [OtpController::class, 'sendOtp']);
+Route::post('/otp/verify', [OtpController::class, 'verifyOtp']);
