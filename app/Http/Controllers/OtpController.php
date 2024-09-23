@@ -4,9 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Otp;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Str;
 use Carbon\Carbon;
+use App\Jobs\SendOtpJob;
 
 class OtpController extends Controller
 {
@@ -23,17 +22,10 @@ class OtpController extends Controller
                 'expires_at' => $otp->expires_at
             ], 429);
         }
-        
-        $newOtpCode = rand(1000, 9999);
-        $expiresAt = Carbon::now()->addMinutes(1);
 
-        Otp::create([
-            'email' => $email,
-            'otp_code' => $newOtpCode,
-            'expires_at' => $expiresAt,
-        ]);
+        dispatch(new SendOtpJob($email));
 
-        return response()->json(['message' => 'OTP has been sent successfully.', 'otp_code' => $newOtpCode, 'expires_at' => $expiresAt]);
+        return response()->json(['message' => 'OTP will be sent shortly.']);
     }
 
     public function verifyOtp(Request $request)
