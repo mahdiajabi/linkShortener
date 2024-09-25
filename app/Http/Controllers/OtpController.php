@@ -3,17 +3,28 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\User;
 use App\Models\Otp;
 use Carbon\Carbon;
 use App\Jobs\SendOtpJob;
+use Illuminate\Support\Str;
 
 class OtpController extends Controller
 {
     public function sendOtp(Request $request)
     {
-        $email = $request->input('email');
+        $phoneNumber = $request->input('phone_number');
 
-        $otp = Otp::where('email', $email)
+        $user = User::where('phone_number', $phoneNumber)->first();
+
+        if (!$user) {
+            $user = User::create([
+                'phone_number' => $phoneNumber,
+                'name' => 'User_' . Str::random(6), 
+            ]);
+        }
+
+        $otp = Otp::where('phone_number', $phoneNumber)
                     ->where('expires_at', '>', Carbon::now())
                     ->first();
         if ($otp) {
@@ -23,7 +34,7 @@ class OtpController extends Controller
             ], 429);
         }
 
-        dispatch(new SendOtpJob($email));
+        dispatch(new SendOtpJob($phoneNumber));
 
         return response()->json(['message' => 'OTP will be sent shortly.']);
     }
@@ -31,11 +42,11 @@ class OtpController extends Controller
     public function verifyOtp(Request $request)
     {
         $request->validate([
-            'email' => 'required|email',
+            'phone_number' => 'required',
             'otp_code' => 'required',
         ]);
 
-        $otp = Otp::where('email', $request->email)
+        $otp = Otp::where('phone_number', $request->phone_number)
                    ->where('otp_code', $request->otp_code)
                    ->whereNull('used_at')
                    ->where('expires_at', '>', Carbon::now())

@@ -14,11 +14,11 @@ class SendOtpJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $email;
+    public $phone_number;
 
-    public function __construct($email)
+    public function __construct($phone_number)
     {
-        $this->email = $email;
+        $this->phone_number = $phone_number;
     }
 
     public function handle()
@@ -27,7 +27,7 @@ class SendOtpJob implements ShouldQueue
         $expiresAt = Carbon::now()->addMinutes(1);
 
         Otp::create([
-            'email' => $this->email,
+            'phone_number' => $this->phone_number,
             'otp_code' => $otpCode,
             'expires_at' => $expiresAt,
         ]);

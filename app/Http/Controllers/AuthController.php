@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Otp; 
+use Carbon\Carbon;
 
 class AuthController extends Controller
 {
@@ -13,12 +15,12 @@ class AuthController extends Controller
     {
         try {
             $request->validate([
-                'email' => 'required|email|unique:users',
+                'phone_number' => 'required|phone_number|unique:users',
                 'password' => 'required|min:6',
             ]);
 
             $user = User::create([
-                'email' => $request->email,
+                'phone_number' => $request->phone_number,
                 'password' => Hash::make($request->password),
             ]);
 
@@ -44,23 +46,46 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
-        // ولیدیت ورودی‌ها
         $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
+            'phone_number' => 'required|phone_number',
+            'password' => 'required_without:otp',  
+            'otp' => 'required_without:password', 
         ]);
 
-        // سرچ کاربر بر اساس ایمیل
-        $user = User::where('email', $request->email)->first();
+        if ($request->has('password')) {
+            $user = User::where('phone_number', $request->phone_number)->first();
 
-        // چک کردن رمز عبور
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            return response()->json(['error' => 'Invalid credentials'], 401);
+            if (!$user || !Hash::check($request->password, $user->password)) {
+                return response()->json(['error' => 'Invalid credentials'], 401);
+            }
+
+            $token = $user->createToken('Personal Access Token')->plainTextToken;
+
+            return response()->json(['token' => $token], 200);
         }
 
-        // تولید توکن 
-        $token = $user->createToken('Personal Access Token')->plainTextToken;
+        if ($request->has('otp')) {
+            $otp = Otp::where('phone_number', $request->phone_number)
+                       ->where('otp_code', $request->otp)
+                       ->whereNull('used_at')
+                       ->where('expires_at', '>', Carbon::now())
+                       ->first();
 
-        return response()->json(['token' => $token], 200);
+            if (!$otp) {
+                return response()->json(['error' => 'Invalid or expired OTP'], 401);
+            }
+
+            $otp->update(['used_at' => Carbon::now()]);
+
+            $user = User::where('phone_number', $request->phone_number)->first();
+
+            if (!$user) {
+                return response()->json(['error' => 'User not found'], 404);
+            }
+
+            $token = $user->createToken('Personal Access Token')->plainTextToken;
+
+            return response()->json(['token' => $token], 200);
+        }
     }
 }
