@@ -20,6 +20,7 @@ class OtpController extends Controller
             $user = User::create([
                 'phone_number' => $phoneNumber,
                 'name' => 'User_' . Str::random(6), 
+                'password' => null,
             ]);
         }
 
