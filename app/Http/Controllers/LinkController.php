@@ -8,6 +8,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\DB;
 use App\Models\Click; 
 
 class LinkController extends Controller
@@ -23,38 +24,77 @@ class LinkController extends Controller
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        $code = Str::random(6);
+        DB::beginTransaction();
+        try {
+            $code = Str::random(6);
 
-        $link = auth()->user()->links()->create([
-            'url' => $request->input('url'),
-            'code' => $code,
-            'click_count' => 0, 
-        ]);
+            $link = auth()->user()->links()->create([
+                'url' => $request->input('url'),
+                'code' => $code,
+                'click_count' => 0,
+            ]);
 
-        return response()->json(['short_url' => url('/l/'.$link->code)]);
-       
+            DB::commit();
+
+            return response()->json(['short_url' => url('/l/'.$link->code)]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('Error creating link: ' . $e->getMessage());
+
+            return response()->json(['error' => 'Failed to create short link'], 500);
+        }
     }
+
 
     public function redirect($code)
     {
-        $link = Link::where('code', $code)->firstOrFail();
+        DB::beginTransaction();
 
-        $link->increment('click_count');
+        try {
+            $link = Link::where('code', $code)->firstOrFail();
 
-        if (auth()->check()) {
-            auth()->user()->clicks()->create([
-                'code' => $code,
-                'clicked_at' => now()
-            ]);
+            $link->increment('click_count');
+
+            if (auth()->check()) {
+                auth()->user()->clicks()->create([
+                    'code' => $code,
+                    'clicked_at' => now()
+                ]);
+            }
+
+            DB::commit();
+
+            return response()->json(['url' => $link->url]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('Error during redirect: ' . $e->getMessage());
+
+            return response()->json(['error' => 'Failed to redirect'], 500);
         }
-
-        return response()->json(['url' => $link->url]);
     }
+
 
     public function getClickCount($code)
     {
-        $link = Link::where('code', $code)->firstOrFail();
+        DB::beginTransaction();
 
-        return response()->json(['click_count' => $link->click_count]);
+        try {
+            $link = Link::where('code', $code)->firstOrFail();
+
+            DB::commit();
+
+            return response()->json(['click_count' => $link->click_count]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('Error fetching click count: ' . $e->getMessage());
+
+            return response()->json(['error' => 'Failed to get click count'], 500);
+        }
     }
 }

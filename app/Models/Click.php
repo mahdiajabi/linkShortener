@@ -11,7 +11,7 @@ class Click extends Model
 
     protected $fillable = ['code', 'user_id', 'clicked_at'];
 
-    public $timestamps = false; // اگر جدول شما ستون‌های timestamps ندارد، این خط را اضافه کنید.
+    public $timestamps = false; 
 
    
     public function user()
@@ -22,6 +22,7 @@ class Click extends Model
    
     public function link()
     {
-        return $this->belongsTo(Link::class, 'code', 'code');
+        return $this->belongsTo(Link::class);
+
     }
 }
