@@ -80,21 +80,9 @@ class LinkController extends Controller
 
     public function getClickCount($code)
     {
-        DB::beginTransaction();
+        $link = Link::where('code', $code)->firstOrFail();
 
-        try {
-            $link = Link::where('code', $code)->firstOrFail();
-
-            DB::commit();
-
-            return response()->json(['click_count' => $link->click_count]);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            Log::error('Error fetching click count: ' . $e->getMessage());
-
-            return response()->json(['error' => 'Failed to get click count'], 500);
-        }
+        return response()->json(['click_count' => $link->click_count]);
     }
+
 }
